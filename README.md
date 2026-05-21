@@ -1,53 +1,77 @@
-# m2_harness_demo
+# M2 — 하네스 데모 (Codex × Claude 협업)
 
-LLM(대형 언어 모델)을 활용한 코드 리뷰 자동화 도구의 프로토타입입니다. 특정 '스킬(Skill)' 정의 파일을 기반으로 AI가 코드를 분석하고 그 결과를 구조화된 보고서로 출력합니다.
+VS Code 안에서 Codex CLI와 Claude Code가 협업하여 코드를 생성·검토하는 하네스 데모.
 
-## 1. 프로젝트 개요
-이 프로젝트는 **Codex × Claude 협업**을 통해 코드를 생성하고 검토하는 과정을 시연합니다. AI 모델이 `skills/code_review.md`에 정의된 지침에 따라 코드를 분석하여 `review_report.md`를 생성하는 구조입니다.
+## 협업 흐름
 
-## 2. 주요 구성 요소 및 역할
-*   **`sample.py`**: AI가 생성한 대상 코드 파일입니다. (분석의 대상)
-*   **`skills/code_review.md`**: AI에게 부여할 **코드 리뷰 페르소나와 규칙**이 담긴 정의 파일입니다.
-*   **`review_report.md`**: AI가 코드를 분석한 후 생성한 **최종 리뷰 보고서**입니다.
-
-## 3. 핵심 동작 구조 (도식화)
-
-### 프로세스 흐름도 (Data Flow)
-
-```text
-[ 입력 단계 ]             [ 처리 단계 (Harness) ]            [ 출력 단계 ]
-┌───────────┐           ┌────────────────────┐          ┌──────────────────┐
-│ 분석 대상  │           │     sample.py      │          │ review_report.md │
-│   코드    ├──────────▶│  (AI 실행 및 제어)  ├─────────▶│  (코드 리뷰 결과)  │
-└───────────┘           └──────────┬─────────┘          └──────────────────┘
-                                   │
-                         [ 규칙 참조 (Skill) ]
-                         ┌──────────────────┐
-                         │  code_review.md  │
-                         │ (리뷰 기준/페르소나)│
-                         └──────────────────┘
+```
+사용자 ──지시──→ Claude (sample.py 작성)
+                ↓
+            sample.py 생성
+                ↓
+사용자 ──지시──→ Codex (code_review Skill 호출)
+                ↓
+            review_report.md 생성
 ```
 
-### 동작 원리
-1.  **Input (대상):** 리뷰를 받을 소스 코드 (`sample.py`).
-2.  **Skill (지침):** `skills/code_review.md`에 정의된 전문적인 코드 리뷰어 가이드라인.
-3.  **Harness (엔진):** 코드를 읽고 스킬을 결합하여 AI 모델에 전달하는 실행 환경.
-4.  **Output (결과):** 분석 결과가 마크다운 문서(`review_report.md`)로 생성됨.
+## 폴더 구성
 
-## 4. 실습 절차
+```
+m2_harness_demo/
+├── README.md
+├── skills/
+│   └── code_review.md       # Skill MD 파일 (실행 절차 정의)
+├── sample.py                # Claude 산출물 예시
+└── review_report.md         # Codex 산출물 예시
+```
 
-### Step 1. 코드 작성 (Claude)
+## 실습 절차 (M2 슬라이드 9~13)
+
+### Step 1. VS Code 두 CLI 분할
+
+```bash
+# VS Code 터미널 단축키: Ctrl + Shift + `
+# 좌측 패널
+codex
+
+# 우상단 분할 아이콘 → 우측 패널
+claude
+```
+
+### Step 2. Skill 정의 (이미 작성됨)
+
+`skills/code_review.md` 파일이 이미 준비되어 있다. Claude·Codex 모두 동일한 Skill을 호출한다.
+
+### Step 3. Claude가 코드 작성 (Claude 호출 1회)
+
+우측 Claude 패널에서:
+
 ```
 > /skill code_review 를 참고하여 sample.py 파일을 작성하라.
+> 요구 사항:
+>   - 함수 add(a, b)와 multiply(a, b) 포함
+>   - 각 함수에 docstring 명시
+>   - 빈 main 가드 추가
 ```
 
-### Step 2. 코드 검토 (Codex)
+### Step 4. Codex가 검토
+
+좌측 Codex 패널에서:
+
 ```
 > use skill code_review on ./sample.py
 > 결과를 review_report.md 로 저장하라.
 ```
 
-## 5. 특징
-*   **프롬프트 엔지니어링의 모듈화**: 리뷰 규칙을 `skills/` 디렉토리에 분리하여 유연하게 확장 가능.
-*   **자동화된 피드백 루프**: 즉각적인 보고서 생성을 통한 지속적인 코드 품질 관리.
-*   **하네스(Harness) 구조**: 특정 스킬이 의도대로 작동하는지 확인하기 위한 독립된 테스트 환경.
+## 산출물
+
+| 파일 | 생성 주체 |
+|---|---|
+| `skills/code_review.md` | 사전 작성 (재사용) |
+| `sample.py` | Claude (Step 3 산출) |
+| `review_report.md` | Codex (Step 4 산출) |
+
+## 도구 전환 시점
+
+- **Claude (호출 1회만)**: Step 3 코드 작성 (5천원 크레딧 안전 운영)
+- **Codex (메인)**: Skill 정의·검토·후속 모든 작업
